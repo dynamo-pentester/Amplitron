@@ -5,13 +5,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/sudip-mondal-2002/Amplitron/releases)
 
-A professional real-time, low-latency guitar amplifier simulator with a visual pedal board interface. Built in C++ using PortAudio for audio I/O and Dear ImGui (SDL2 + OpenGL) for the GUI.
+Professional real-time guitar amplifier simulator with ultra-low latency, 9 studio-quality effects, and a beautiful visual pedal board interface. Built in C++17 with PortAudio, SDL2, and Dear ImGui.
 
 **[Download Latest Release](https://github.com/sudip-mondal-2002/Amplitron/releases/latest)** | **[Visit Website](https://sudip-mondal-2002.github.io/Amplitron/)**
 
-A real-time, low-latency guitar amplifier simulator with a visual pedal board interface. Built in C++ using PortAudio for audio I/O and Dear ImGui (SDL2 + OpenGL) for the GUI.
-
-Designed for guitarists who plug their guitar directly into their laptop using a **USB Guitar Cable** (1/4" guitar jack on one end, USB-C on the other). The software processes your guitar signal in real-time and plays it back through your laptop speakers or headphones — turning your computer into a full guitar amp + pedalboard.
+Transform your computer into a complete guitar rig. Plug in your guitar via USB audio interface or guitar cable, and get instant access to professional amp simulation with studio-quality effects — all with imperceptible latency.
 
 ---
 
@@ -376,15 +374,16 @@ Amplitron uses GitHub Actions for continuous integration and deployment:
   - Uploads release assets
   - Deploys download page to GitHub Pages
 
-### Creating a Release
+### Automatic Releases
 
-1. Tag a new version: `git tag v1.0.0`
-2. Push the tag: `git push origin v1.0.0`
-3. GitHub Actions will automatically:
-   - Build for all platforms
-   - Run tests
-   - Create release with binaries
-   - Deploy website
+Every push to `main` automatically:
+- Builds for Windows, macOS, and Linux
+- Runs the full test suite (64+ tests)
+- Creates a new release with version `dev-YYYYMMDD-<commit-sha>`
+- Uploads binaries for all platforms
+- Deploys the download page to GitHub Pages
+
+No manual tagging required — just push to `main` and get a release!
 
 ### Contributing
 
