@@ -242,11 +242,6 @@ private:
     std::atomic<float> cpu_load_{0.0f};
     std::atomic<float> callback_duration_us_{0.0f};
     bool auto_buffer_enabled_ = false;
-
-    // Backend implementations (defined in audio_backend_*.cpp)
-    // grant access to private members via the member-function trick:
-    // the backend .cpp files implement AudioEngine member functions.
-    friend struct AudioBackendState;
 };
 
 } // namespace GuitarAmp

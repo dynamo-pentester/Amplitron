@@ -21,6 +21,7 @@ namespace GuitarAmp {
 // -----------------------------------------------------------------------------
 
 struct AudioBackendState {
+    AudioEngine* engine = nullptr;          // back-pointer set by start()
     SDL_AudioDeviceID audio_device = 0;
     SDL_AudioDeviceID capture_device = 0;
     std::vector<float> capture_buffer;
@@ -39,9 +40,8 @@ void destroy_audio_backend(AudioBackendState* state) {
 // -----------------------------------------------------------------------------
 
 static void sdl_audio_callback(void* userdata, Uint8* stream, int len) {
-    auto* engine = static_cast<AudioEngine*>(userdata);
-    // Access backend state through the friend relationship
-    auto* be = engine->backend_;
+    auto* be = static_cast<AudioBackendState*>(userdata);
+    auto* engine = be->engine;
     auto* out = reinterpret_cast<float*>(stream);
     int frame_count = len / static_cast<int>(sizeof(float));
 
@@ -110,7 +110,8 @@ bool AudioEngine::start() {
     want_out.channels = 1;
     want_out.samples = static_cast<Uint16>(web_buffer);
     want_out.callback = sdl_audio_callback;
-    want_out.userdata = this;
+    backend_->engine = this;
+    want_out.userdata = backend_;
 
     backend_->audio_device = SDL_OpenAudioDevice(nullptr, 0, &want_out, &have_out,
                                                   SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
