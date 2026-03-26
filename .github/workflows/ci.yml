@@ -151,22 +151,36 @@ jobs:
   build-web:
     name: Build Web Demo (Emscripten)
     runs-on: ubuntu-latest
+    env:
+      EMSDK_VERSION: 3.1.51
     steps:
     - uses: actions/checkout@v6
 
-    - name: Setup Emscripten
-      uses: mymindstorm/setup-emsdk@v14
+    - name: Cache Emscripten SDK & ports
+      uses: actions/cache@v5
+      id: emsdk-cache
       with:
-        version: 3.1.51
-        actions-cache-folder: emsdk-cache
-
-    - name: Cache Emscripten ports & system libs
-      uses: actions/cache@v4
-      with:
-        path: ~/.emscripten_cache
-        key: emsdk-cache-3.1.51-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}
+        path: |
+          emsdk
+          ~/.emscripten_cache
+        key: emsdk-${{ env.EMSDK_VERSION }}-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}
         restore-keys: |
-          emsdk-cache-3.1.51-${{ runner.os }}-
+          emsdk-${{ env.EMSDK_VERSION }}-${{ runner.os }}-
+
+    - name: Setup Emscripten
+      if: steps.emsdk-cache.outputs.cache-hit != 'true'
+      run: |
+        git clone https://github.com/emscripten-core/emsdk.git
+        cd emsdk
+        ./emsdk install $EMSDK_VERSION
+        ./emsdk activate $EMSDK_VERSION
+
+    - name: Activate Emscripten
+      run: |
+        cd emsdk
+        ./emsdk activate $EMSDK_VERSION
+        echo "${{ github.workspace }}/emsdk" >> $GITHUB_PATH
+        echo "${{ github.workspace }}/emsdk/upstream/emscripten" >> $GITHUB_PATH
 
     - name: Setup External Dependencies
       run: |
@@ -177,6 +191,7 @@ jobs:
 
     - name: Build WASM
       run: |
+        source emsdk/emsdk_env.sh
         mkdir -p build-web && cd build-web
         emcmake cmake -DCMAKE_BUILD_TYPE=Release ..
         emmake make -j$(nproc)
