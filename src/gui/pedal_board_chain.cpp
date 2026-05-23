@@ -12,7 +12,7 @@ namespace Amplitron {
 
 void PedalBoard::render_signal_chain() {
     auto& ui_state = GuiGraphState::get_instance();
-    ui_state.canvas_hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
+    // canvas_hovered is updated after the InvisibleButton is drawn (see below)
     float dt = ImGui::GetIO().DeltaTime;
     float lerp_factor = 1.0f - std::exp(-30.0f * dt);
     if (lerp_factor < 0.0f) lerp_factor = 0.0f;
@@ -24,10 +24,14 @@ void PedalBoard::render_signal_chain() {
         ui_state.zoom = ui_state.target_zoom;
     }
     if (old_zoom != ui_state.zoom) {
+        // Use canvas-local mouse coords to avoid drift when canvas is not at screen origin
         float actual_factor = ui_state.zoom / old_zoom;
         ImVec2 mouse_pos = ImGui::GetMousePos();
-        ui_state.scrolling.x = mouse_pos.x - (mouse_pos.x - ui_state.scrolling.x) * actual_factor;
-        ui_state.scrolling.y = mouse_pos.y - (mouse_pos.y - ui_state.scrolling.y) * actual_factor;
+        ImVec2 canvas_pos_now = ui_state.last_canvas_pos;
+        float local_x = mouse_pos.x - canvas_pos_now.x;
+        float local_y = mouse_pos.y - canvas_pos_now.y;
+        ui_state.scrolling.x = local_x - (local_x - ui_state.scrolling.x) * actual_factor;
+        ui_state.scrolling.y = local_y - (local_y - ui_state.scrolling.y) * actual_factor;
         ui_state.target_scrolling = ui_state.scrolling;
     }
     if (std::abs(ui_state.target_scrolling.x - ui_state.scrolling.x) > 0.01f ||
@@ -53,6 +57,8 @@ void PedalBoard::render_signal_chain() {
     
     ImGui::InvisibleButton("canvas_panning_hotspot", canvas_size, btn_flags);
     ImGui::SetItemAllowOverlap();
+    // Update canvas_hovered here — after InvisibleButton — so it reflects the actual canvas item
+    ui_state.canvas_hovered = ImGui::IsItemHovered();
     
     if (ui_state.hand_tool_active && ImGui::IsItemHovered()) {
         ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);

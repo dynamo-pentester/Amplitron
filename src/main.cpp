@@ -179,15 +179,20 @@ extern "C" EMSCRIPTEN_KEEPALIVE bool trigger_delete_last_node() {
     if (!g_gui) return false;
     auto& graph = g_gui->audio_engine().graph();
     const auto& nodes = graph.get_nodes();
-    if (nodes.empty()) return false;
-    int last_id = nodes.back().id;
-    bool ok = graph.remove_node(last_id);
-    if (ok) {
-        Amplitron::GuiGraphState::get_instance().node_positions.erase(last_id);
-        g_gui->audio_engine().commit_graph_changes();
+    // Walk backwards to find the last deletable node (mirrors GUI rules: Input and Amp Sim are protected)
+    for (int i = static_cast<int>(nodes.size()) - 1; i >= 0; --i) {
+        const auto& node = nodes[i];
+        if (node.name == "Input" || node.name == "Amp Sim") continue;
+        bool ok = graph.remove_node(node.id);
+        if (ok) {
+            Amplitron::GuiGraphState::get_instance().node_positions.erase(node.id);
+            g_gui->audio_engine().commit_graph_changes();
+        }
+        return ok;
     }
-    return ok;
+    return false; // No deletable node found
 }
+
 #endif
 
 void signal_handler(int /*signal*/) {

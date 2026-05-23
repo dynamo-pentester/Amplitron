@@ -349,7 +349,9 @@
       if (Module && Module.ccall) {
         try {
           canvasHovered = Module.ccall('is_canvas_hovered', 'boolean');
-        } catch (err) {}
+        } catch (err) {
+          console.warn('[Amplitron] is_canvas_hovered bridge error:', err);
+        }
       }
       if (e.ctrlKey) {
         e.preventDefault();
