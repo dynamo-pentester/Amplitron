@@ -516,8 +516,14 @@ jobs:
           else
             LCOV_IGNORE=""
           fi
-          # Skip --initial baseline: Linux provides the zero-coverage baseline for the merged report
-          lcov --capture --directory build --output-file coverage.info $LCOV_IGNORE 2>&1 | tail -20
+          # Skip --initial baseline: Linux provides the zero-coverage baseline for the merged report.
+          # Scope --directory to only the two CMakeFiles target dirs instead of all of build/.
+          # This avoids lcov calling gcov on _deps/, cmake internals, and mingw64 system paths —
+          # the dominant source of Windows coverage latency with lcov 1.x (sequential gcov calls).
+          lcov --capture \
+            --directory build/CMakeFiles/Amplitron.dir \
+            --directory build/CMakeFiles/amplitron-tests.dir \
+            --output-file coverage.info $LCOV_IGNORE 2>&1 | tail -20
           # Normalize backslashes, unmangle MSYS2 paths, resolve build/../ quirks, and normalize to absolute Linux runner workspace paths
           sed -i 's|\\|/|g' coverage.info
           sed -i 's|/build/../|/|g' coverage.info
