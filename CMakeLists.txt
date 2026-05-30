@@ -583,6 +583,8 @@ else() # NOT EMSCRIPTEN, ANDROID, or IOS
         ${CMAKE_SOURCE_DIR}/src/presets
         ${CMAKE_SOURCE_DIR}/external
         ${CMAKE_SOURCE_DIR}/external/kiss_fft
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
         ${PORTAUDIO_INCLUDE_DIRS}
         ${SDL2_INCLUDE_DIRS}
         ${RTMIDI_INCLUDE_DIRS}
