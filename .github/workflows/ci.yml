@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Cache apt packages
         uses: actions/cache@v5
@@ -50,7 +50,8 @@ jobs:
       - name: Generate Version
         id: version
         run: |
-          echo "version=0.1.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          COUNT=$(git rev-list --count HEAD)
+          echo "version=0.1.${COUNT}" >> $GITHUB_OUTPUT
 
       - name: Build
         run: |
@@ -131,7 +132,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Install Dependencies
         run: brew install portaudio sdl2 rtmidi lcov
@@ -144,7 +145,8 @@ jobs:
       - name: Generate Version
         id: version
         run: |
-          echo "version=0.1.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          COUNT=$(git rev-list --count HEAD)
+          echo "version=0.1.${COUNT}" >> $GITHUB_OUTPUT
 
       - name: Build
         run: |
@@ -295,7 +297,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Cache Emscripten SDK & ports
         uses: actions/cache@v5
@@ -335,7 +337,8 @@ jobs:
       - name: Generate Version
         id: version
         run: |
-          echo "version=0.1.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          COUNT=$(git rev-list --count HEAD)
+          echo "version=0.1.${COUNT}" >> $GITHUB_OUTPUT
 
       - name: Build WASM
         run: |
@@ -358,7 +361,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Download web build artifact
         uses: actions/download-artifact@v8
@@ -444,10 +447,8 @@ jobs:
           ./scripts/setup_dependencies.sh --no-system-deps
 
       - name: Generate Version
-        shell: msys2 {0}
         id: version
-        run: |
-          echo "version=0.1.${{ github.run_number }}" >> $GITHUB_OUTPUT
+        run: echo "version=0.1.${{ github.run_number }}" >> $GITHUB_OUTPUT
 
       - name: Build
         shell: msys2 {0}
@@ -455,6 +456,10 @@ jobs:
           export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
           export CCACHE_MAXSIZE=200M
           mkdir -p "$CCACHE_DIR"
+          # PR builds: RelWithDebInfo + -O2 keeps coverage instrumentation while
+          # cutting compile time significantly vs Debug/-O0. Inlining precision
+          # trade-off is acceptable for a supplementary platform coverage report;
+          # Linux provides the Debug baseline used by the merged report.
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             BUILD_TYPE=RelWithDebInfo
             COV_FLAGS="--coverage -O2"
@@ -512,11 +517,14 @@ jobs:
           else
             LCOV_IGNORE=""
           fi
-          # Skip --initial baseline: Linux provides the zero-coverage baseline for the merged report.
-          # Scope --directory to only the two CMakeFiles target dirs instead of all of build/.
-          # This avoids lcov calling gcov on _deps/, cmake internals, and mingw64 system paths —
-          # the dominant source of Windows coverage latency with lcov 1.x (sequential gcov calls).
+          # Scope lcov to only the three CMakeFiles target directories:
+          # - amplitron_core.dir  → shared OBJECT library (effects, DSP, presets, MIDI, recorder)
+          # - Amplitron.dir       → main executable (main.cpp, GUI, backends)
+          # - amplitron-tests.dir → test executable (test sources + mocked backends)
+          # This skips _deps/, cmake internals, and MSYS2/mingw64 path traversal,
+          # cutting the gcov call count from hundreds of files to ~80.
           lcov --capture \
+            --directory build/CMakeFiles/amplitron_core.dir \
             --directory build/CMakeFiles/Amplitron.dir \
             --directory build/CMakeFiles/amplitron-tests.dir \
             --output-file coverage.info $LCOV_IGNORE 2>&1 | tail -20
@@ -565,7 +573,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -598,7 +606,8 @@ jobs:
       - name: Generate Version
         id: version
         run: |
-          echo "version=0.1.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          COUNT=$(git rev-list --count HEAD)
+          echo "version=0.1.${COUNT}" >> $GITHUB_OUTPUT
 
       - name: Build APK
         working-directory: android
@@ -635,7 +644,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup External Dependencies
         run: |
@@ -645,7 +654,8 @@ jobs:
       - name: Generate Version
         id: version
         run: |
-          echo "version=0.1.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          COUNT=$(git rev-list --count HEAD)
+          echo "version=0.1.${COUNT}" >> $GITHUB_OUTPUT
 
       - name: Cache SDL2 iOS static library
         id: sdl2-ios-cache
